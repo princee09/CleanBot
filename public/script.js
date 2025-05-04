@@ -976,6 +976,7 @@ document.getElementById('tab-login').addEventListener('click', () => {
   document.getElementById('tab-signup').classList.remove('active');
 });
 
+
 document.getElementById('google-signup-btn').addEventListener('click', () => {
   window.location.href = 'http://localhost:4000/auth/google';
 });
@@ -1221,22 +1222,6 @@ function insertQuery(query) {
   userInput.value = query;
   sendMessage();
 }
-
-document.getElementById('cleaning-tips-btn').addEventListener('click', function() {
-  insertQuery('Give me some general cleaning tips');
-});
-
-document.getElementById('stain-removal-btn').addEventListener('click', function() {
-  insertQuery('How do I remove tough stains?');
-});
-
-document.getElementById('cleaning-schedule-btn').addEventListener('click', function() {
-  showSchedulerModal();
-});
-
-document.getElementById('eco-cleaning-btn').addEventListener('click', function() {
-  insertQuery('What are some eco-friendly cleaning solutions?');
-});
 
 // Temperature slider removed as requested
 
