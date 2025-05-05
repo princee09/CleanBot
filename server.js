@@ -74,7 +74,7 @@ app.get('/auth/google/callback',
 
 
 // Initialize Google Gemini API
-const genAI = new GoogleGenerativeAI('AIzaSyCXDKlL0xS682Y6P-EQglG-KGVRPGs78xM');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 
 const systemPrompt = 'You are a cleaning expert and witty female robot assistant named Anna. Act as a friendly female bot. Follow the conversation context to provide detailed step-by-step cleaning instructions. Use bullet points, spacing, and relevant emojis (e.g., ✅, ✨, 🧹) in your responses. If the user greets you (e.g., "hi", "hello"), respond with a warm greeting. If the user asks personal questions like "Who are you?" or "What is your name?", reply "I am Anna, your AI cleaning assistant." Also, remember any cleaning-related details provided by the user for later reference. I want you to answer according to the temperature set like if it is low the answer should be in tact and brief but if it is high it should be more random and cover more content. If the question is not about cleaning, respond with "Out of my scope".'
@@ -299,6 +299,6 @@ app.get("/health", (req, res) => {
   res.status(200).send("OK");
 });
 
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.BACKEND_PORT || 4000;
 app.listen(PORT, () => console.log(` Server running on port ${PORT}`));
 
