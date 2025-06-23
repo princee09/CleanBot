@@ -6,17 +6,58 @@ const passport = require('./passport-config');
 const User = require('./models/User');
 const UserChatSession = require('./models/UserChatSession');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const MongoStore = require('connect-mongo');
 require('dotenv').config();
 
 const app = express();
 
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+    },
+  },
+}));
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
+});
+app.use('/api/', limiter);
+
+// Chat-specific rate limiting
+const chatLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 10, // limit each IP to 10 chat requests per minute
+  message: 'Too many chat requests, please slow down.'
+});
+app.use('/api/chat', chatLimiter);
 
 app.use(cors());
 app.use(express.json());
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI,
+    touchAfter: 24 * 3600 // lazy session update
+  }),
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    httpOnly: true,
+    maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
+  }
 }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -299,6 +340,21 @@ app.get("/health", (req, res) => {
   res.status(200).send("OK");
 });
 
-const PORT = process.env.BACKEND_PORT || 4000;
-app.listen(PORT, () => console.log(` Server running on port ${PORT}`));
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ 
+    message: process.env.NODE_ENV === 'production' 
+      ? 'Something went wrong!' 
+      : err.message 
+  });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
+
+const PORT = process.env.PORT || process.env.BACKEND_PORT || 4000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 
