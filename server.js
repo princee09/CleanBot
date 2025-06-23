@@ -13,19 +13,29 @@ require('dotenv').config();
 
 const app = express();
 
-// Security middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:"],
-      connectSrc: ["'self'"],
-      fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+// Trust proxy - CRITICAL for deployment platforms
+app.set('trust proxy', 1);
+
+// Security middleware with relaxed CSP for API connections
+// Temporary fix - disable CSP in development
+if (process.env.NODE_ENV !== 'production') {
+  app.use(helmet({
+    contentSecurityPolicy: false
+  }));
+} else {
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:"],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
+      },
     },
-  },
-}));
+  }));
+}
 
 // Rate limiting
 const limiter = rateLimit({
